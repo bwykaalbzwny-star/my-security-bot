@@ -1,47 +1,45 @@
-
 from pyrogram import Client, filters
-from pyrogram.types import ChatPermissions
-import asyncio
+from pyrogram.types import Message
 
-# --- ضع بياناتك هنا ---
-API_ID = 35155369
+# --- بيانات الاتصال الرسمية الخاصة بك ---
+API_ID = 8521546538
 API_HASH = "1a56f40cb94b019f6f0318add045f1f3"
 BOT_TOKEN = "8420084014:AAGeSCEMJFEAKs9gtG5fRROp4-t7HqJcsFs"
-# --------------------
 
-app = Client("guard_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("my_security_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# 1. رسالة ترحيب عند دخول عضو جديد
-@app.on_chat_member_updated()
-async def welcome(client, update):
-    if update.new_chat_member:
-        user = update.new_chat_member.user
-        await client.send_message(update.chat.id, f"أهلاً بك يا {user.mention} في المجموعة! يرجى الالتزام بالقوانين.")
+# --- قائمة الأوامر ---
+@app.on_message(filters.command("الاوامر"))
+async def commands_list(client: Client, message: Message):
+    text = """
+🤖 **بوت الحماية الخاص بك جاهز ومستقر!**
 
-# 2. حذف الروابط تلقائياً لغير المشرفين
-@app.on_message(filters.group & filters.regex(r"(https?://\S+|t\.me/\S+)"))
-async def delete_links(client, message):
-    member = await client.get_chat_member(message.chat.id, message.from_user.id)
-    if member.status not in ["administrator", "creator"]:
-        await message.delete()
+إليك الأوامر المتاحة:
+• `ايدي` - لعرض الايدي الخاص بك.
+• `معلوماتي` - لعرض تفاصيل حسابك.
+• `الاوامر` - لعرض هذه القائمة.
 
-# 3. أمر الطرد (بالرد على الشخص بكلمة طرد)
-@app.on_message(filters.command("طرد") & filters.group)
-async def ban_user(client, message):
-    member = await client.get_chat_member(message.chat.id, message.from_user.id)
-    if member.status in ["administrator", "creator"]:
-        if message.reply_to_message:
-            await client.ban_chat_member(message.chat.id, message.reply_to_message.from_user.id)
-            await message.reply(f"✅ تم طرد {message.reply_to_message.from_user.first_name}")
+✅ البوت يعمل الآن بنجاح على سيرفر Koyeb بنظام الـ Worker.
+    """
+    await message.reply(text)
 
-# 4. أمر الكتم (بالرد على الشخص بكلمة كتم)
-@app.on_message(filters.command("كتم") & filters.group)
-async def mute_user(client, message):
-    member = await client.get_chat_member(message.chat.id, message.from_user.id)
-    if member.status in ["administrator", "creator"]:
-        if message.reply_to_message:
-            await client.restrict_chat_member(message.chat.id, message.reply_to_message.from_user.id, ChatPermissions())
-            await message.reply(f"🔇 تم كتم {message.reply_to_message.from_user.first_name}")
+# --- أمر الايدي ---
+@app.on_message(filters.command("ايدي"))
+async def get_id(client: Client, message: Message):
+    await message.reply(f"🆔 الايدي الخاص بك هو: `{message.from_user.id}`")
 
-print("البوت يعمل الآن بنجاح...")
+# --- أمر معلوماتي ---
+@app.on_message(filters.command("معلوماتي"))
+async def my_info(client: Client, message: Message):
+    user = message.from_user
+    info = f"""
+👤 **معلوماتك الشخصية:**
+• الاسم: {user.first_name}
+• المعرف: @{user.username if user.username else 'لا يوجد'}
+• الايدي: `{user.id}`
+    """
+    await message.reply(info)
+
+# تشغيل البوت
+print("--- البوت بدأ العمل الآن بنجاح! ---")
 app.run()
